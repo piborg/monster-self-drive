@@ -18,7 +18,7 @@ The code is split into four Python scripts, each responsible for a set task.
 * `ThunderBorg.py` - The standard ThunderBorg library, used to control MonsterBorg's motors
 * `Settings.py` - Our settings for the robot to drive with, also holds some shared data between the scripts
 * `MonsterAuto.py` - The main starting script, controls all of the threads and gets things started
-* `ImageProcessor.py` - The complex part, this script talks to the camera, processes the images, then decides on how my power to give the motors
+* `ImageProcessor.py` - The complex part, this script talks to the camera, processes the images, then decides on how much power to give the motors
 
 In general you should be able to get everything running just by changing `Settings.py` to match your track / route so that the robot knows what to follow.  Anyone that wants to see how the processing works or to make improvements will want to look at `ImageProcessor.py` as well.
 
@@ -29,10 +29,12 @@ The track itself should be made up of a continuous line in the same colour.  Bri
 
 The track can be either thin or thick depending on your needs.  The thickest width we would recommend is about 60 cm (2 ft) and the smallest about 2.5 cm (1 in), something around 30 cm (1 ft) works rather well.  With narrower tracks you will need the robot to follow the course more precisely to make sure it does not get lost.  Wider tracks can follow the course in a looser fashion, but will likely stray further from the central line of the track.
 
-## Getting setup
-Unlike most of our examples, this code needs a bit of adjustment before it is ready to go.  The default settings are setup for following one of the red lanes on our Formula Pi track.  You should be able to follow any nice obvious colour, but bright colours will work better.
+Check out [Formula Pi](https://www.formulapi.com/?ref=selfdrive) to get an idea of what a fully walled track can look like.  There are also videos of how MonsterBorgs can perform on this track from just the camera image on our [YouTube channel](https://www.youtube.com/channel/UCKyhhVOx8BjZKJWLQTuc67g).
 
-Before starting you will want a connection to your robot where you can see graphical output, such as VNC, and actual monitor, or SSH with X11 forwarding enabled.  This will allow us to see what effect our changes have on what the robot can see.  It is best to do the setup on the MonsterBorg itself when sat on the floor so that the camera height is correct for your track.
+## Getting setup
+Unlike most of our examples, this code needs a bit of adjustment before it is ready to go.  The default settings are setup for following one of the red lanes on our [Formula Pi track](https://www.formulapi.com/track-1?ref=selfdrive).  You should be able to follow any nice obvious colour, but bright colours will work better.
+
+Before starting you will want a connection to your robot where you can see graphical output, such as VNC, an actual monitor, or SSH with X11 forwarding enabled.  This will allow you to see what effect the changes have on what the robot can see.  It is best to do the setup on the MonsterBorg itself when sat on the floor so that the camera height is correct for your track.
 
 From the Raspberry Pi begin by running the main script:
 ```bash
@@ -46,11 +48,11 @@ Your robot should start processing the camera but it will not start moving yet.
 
 The image shown has a few parts of interest:
 * The bright areas are those which match the set colour
-* The dark areas are those which do no match the set colour
+* The dark areas are those which do not match the set colour
 * The two cyan circles are the points we have placed the center of our lane at
 * The yellow line is what we are trying to follow
 
-If everything is setup correctly for the track then you should see the right area highlighted.  Otherwise we need to set the image up for the track.
+If everything is setup correctly for the track then you should see the correct area highlighted.  Otherwise we need to set the image up for the track.
 
 ### Setting the track colour
 First end the script using `CTRL`+`C` if it is still running.  All of the settings are in `Settings.py` so open it up in your favourite text editor.
@@ -68,9 +70,9 @@ The third value, `erodeSize`, is a little harder to explain.  With a value of `1
 
 If you are struggling to see what is highlighted you can set the `overlayOriginal` setting further down to `False`.  This will show matched areas as grey and unmatched as black.
 
-![](track-mask-mode?raw=true)
+![](track-mask-mode.PNG?raw=true)
 
-Each time you make a change save the `Settings.py` file and run `MonsterAuto.py` again to test the change.  Once the highlighted region is approximately correct we can move on to the tracked points.
+Each time you make a change save the `Settings.py` file and run `MonsterAuto.py` again to test the change.  Once the highlighted region is approximately correct we can move on to positioning the tracked points in the correct places.
 
 ### Setting the tracked points
 Stay tuned ^_^
