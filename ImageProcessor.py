@@ -268,12 +268,12 @@ class StreamProcessor(threading.Thread):
                 displayImage /= 2
             # Draw line between points
             if (X1 != None) and (X2 != None):
-                cv2.line(displayImage, (X1, Settings.targetY1), (X2, Settings.targetY2), (0, 255, 255), 1, lineType = cv2.CV_AA)
+                cv2.line(displayImage, (X1, Settings.targetY1), (X2, Settings.targetY2), Settings.targetLine, 1, lineType = cv2.CV_AA)
             # Draw circles around points
             if X1 != None:
-                cv2.circle(displayImage, (X1, Settings.targetY1), 3, (255, 255, 0), 1, lineType = cv2.CV_AA) 
+                cv2.circle(displayImage, (X1, Settings.targetY1), Settings.targetPointSize, Settings.targetPoints, 1, lineType = cv2.CV_AA) 
             if X2 != None:
-                cv2.circle(displayImage, (X2, Settings.targetY2), 3, (255, 255, 0), 1, lineType = cv2.CV_AA) 
+                cv2.circle(displayImage, (X2, Settings.targetY2), Settings.targetPointSize, Settings.targetPoints, 1, lineType = cv2.CV_AA) 
             Settings.displayFrame = displayImage
         # Pass the results to the control loop
         # Offset is most important, but ideally we need both

@@ -75,4 +75,121 @@ If you are struggling to see what is highlighted you can set the `overlayOrigina
 Each time you make a change save the `Settings.py` file and run `MonsterAuto.py` again to test the change.  Once the highlighted region is approximately correct we can move on to positioning the tracked points in the correct places.
 
 ### Setting the tracked points
-Stay tuned ^_^
+The code works by identifying the track in two places, a near point and a far point.  On the displayed image these are shown by the two cyan circles.  If there are not two circles shown then the robot is not finding the track at both targets on the image and will not plot the yellow line to indicate the calculated location of the track.
+
+![](track-overlay-mode.PNG?raw=true)
+
+If both of the circles are not both shown there are three possible causes:
+1. The track is not fully in view (unlikely during setup)
+2. The highlighted region does not cover the track properly
+3. The Y positions used to look for the track are wrong
+
+If the highlighting is incorrect go back to the track colour setup and correct that first.  Otherwise we need to move the target positions to better values.  The settings we need to edit are:
+```python
+targetY1 = int(imageHeight * 0.9)       # Y location for the closest point to track in the image
+targetY2 = int(imageHeight * 0.6)       # Y location for the furthest point to track in the image
+```
+
+Are defaults are set to a near point of 90% (`0.9`) down the image and a far point of 60% (`0.6`) down the image.  Larger values are closer to the bottom of the image.  You should keep the near point closer to the bottom of the image as some of the code depends on it being closer to where the robot currently is.
+
+You may also wish to alter some of the general camera settings at this stage.  Check the documentation from the Raspberry Pi foundation or you camera manufacturer to find out what resolutions and frame rates are available.  If the image seems to be rotated 180° then change `flippedImage` from `True` to `False` to correct the rotation.
+
+Once you have the two circles showing reliably you are ready to move on to getting the robot to move :)
+
+## Running the robot
+In order to run the robot all we need to do is look for the line:
+```python
+testMode = True                         # True to prevent the robot moving, False will self-drive
+```
+and change the value to `False`.  This will get the robot to run instead of just printing out motor settings.
+
+There may be a few other things that want to be changed to make things go smoothly.
+
+### Running without the display
+Find this line:
+```python
+showImages = True                       # True to show processing images
+```
+and change the setting to `False`.  You will need to do this if the robot cannot show images to you otherwise the script will fail to run.  This is also necessary when getting the script to run automatically at startup
+
+### Stopping the robot
+If the robot is trying to run off or you need to stop the script then this is the best procedure to follow
+1. Pick the MonsterBorg up so it cannot go anywhere - we recommend this is done by carefully scooping it up from the motors and avoid trapping you fingers in small holes or moving wheels!
+2. Block the camera with either your hand or an opaque object
+3. As it cannot see the track it should gradually slow then come to a stop after a second or so
+4. If you need to place the robot back down, keeping the camera vision blocked
+5. End the script either by using `CTRL`+`C` if you can or `sudo killall python` if needed
+
+If the robot does not stop when the camera is blocked (step 2) then either the script has died or the target track colours allow black as valid.  In this case it is usually best to place the MonsterBorg on top of something solid with the wheels off the floor such that it cannot move itself.  This may be easier to do if the robot is placed upside-down.
+
+If the motors have not stopped after ending the script you can force them to stop from a terminal as follows:
+```bash
+cd ~/monster-self-drive
+python
+```
+```python
+import ThunderBorg
+TB = ThunderBorg.ThunderBorg()
+TB.Init()
+TB.MotorsOff()
+```
+
+### Speed setting
+While you are getting the robot to drive in a well-behaved fashion it may be helpful to change the running speed.  Start by looking for this line:
+```python
+currentSpeed = 1.0                      # Speed setting used by the control loop
+```
+The value set can be anything between `0.0` for no movement at all to `1.0` for full speed.  For example `0.6` would be 60% of full speed, probably enough for some gentle testing.
+
+### Steering control
+This is the big one, where most of the settings actually are.  The control is based on two PID loops: one based on the offset from the center of the track, and the other based on how far the track position changes between the two points.  In general larger values mean that larger steering changes are applied, with values of `0.00` meaning that part has no effect on the steering.
+
+The major settings are here:
+```python
+# Control settings
+motorSmoothing = 5                      # Number of frames to average motor output for, larger is slower to respond but drives smoother
+positionP = 1.00                        # P term for control based on distance from line
+positionI = 0.00                        # I term for control based on distance from line
+positionD = 0.40                        # D term for control based on distance from line
+changeP = 1.00                          # P term for control based on change between the points from the line
+changeI = 0.00                          # I term for control based on change between the points from the line
+changeD = 0.40                          # D term for control based on change between the points from the line
+clipI = 100                             # Maximum limit for both integrators
+```
+
+Each setting has its own specific role:
+* `motorSmoothing` - Averages changes in speed and steering over this many readings.  Use larger values to make the overall movement smoother at the expense of being slower to react to changes in the track position
+* `positionP` - Applies steering based on how far the robot is from the center of the track right now
+* `positionI` - Applies steering based on how far the robot stays from the center of the track over time
+* `positionD` - Applies steering based on how much farer the robot is from the center of the track compared to the last image
+* `changeP` - Applies steering based on how far the track is from straight forward right now
+* `changeI` - Applies steering based on how far the track stays from straight forward over time
+* `changeD` - Applies steering based on how much farer the track is from straight forward compared to the last image
+* `clipI` - Limits the maximum value the two `I` settings above can reach
+
+Tuning these PID loops can be a tricky and confusing exercise, the top voted answer [here](https://robotics.stackexchange.com/questions/167/what-are-good-strategies-for-tuning-pid-loops) is probably a good starting point.  As there are two sets of PID loops we recommend turning all of the `change` values to `0.00` and tuning the `position` values only first.  After that you can add in the `change` values to get the robot to control in a more responsive fashion.
+
+Generally we have found wider tracks need more emphasis on the `change` values and that narrower tracks rely more on the `position` values.  Using the `change` values only is usually not a good idea as if the robot strays too far from the center it may only be able to see a single point.  When only a single point can be seen the distance based PID loop still works normally, but the change based PID loop gets an input of 0 since the code cannot figure out what the change is :(
+
+There are also some minor settings for tweaking the steering from:
+```python
+# Final drive settings
+steeringGain = 1.0                      # Steering range correction value
+steeringClip = 1.0                      # Maximum steering value
+steeringOffset = 0.0                    # Steering centre correction value
+```
+
+These are much simpler but only adjust the output from the calculations above:
+* `steeringGain` - Overall gain on the steering values.  Can be used to increase or decrease motor levels used for steering, Values of `2.0` and above will allow full tank steering to be used
+* `steeringClip` - Limit the maximum steering level.  On MonsterBorg `0.0` means none, `1.0` is full brake steering, and `2.0` would allow full tank steering
+* `steeringOffset` - Apply a correction to steering values so that `0.0` means straight ahead.  Usually not needed but may prove useful if your MonsterBorg is struggling to drive straight
+
+## Further reading
+If you want to know more about how the code works or how it can be improved there are a some good sources of further reading:
+* Find out how the processing works in our Formula Pi code, see the [Formula Pi Blog - Image Processing posts](https://www.formulapi.com/tags/image-processing?ref=selfdrive)
+* Learn more about OpenCV and what it can do with the [OpenCV-Python Tutorials](http://docs.opencv.org/3.1.0/d6/d00/tutorial_py_root.html)
+* Considering using some smarter AI to control your MonsterBorg? Why not take a look at [TensorFlow](https://www.tensorflow.org/)?
+* Building your own track, check out how we built ours, [Formula Pi track build information](https://www.formulapi.com/track-build-information?ref=selfdrive)
+* Check out some footage of YetiBorgs and MonsterBorgs racing in Formula Pi on our [PiBorg YouTube channel](https://www.youtube.com/user/FreeburnRobotics/videos)
+* Want some real images from a MonsterBorg racing around our track? [MonsterBorg self-driving footage](https://www.formulapi.com/blog/monster-raw-footage-analysis?ref=selfdrive)
+* Fancy a challenge?  Why not enter next Formula Pi series! [Formula Pi website](https://www.formulapi.com/?ref=selfdrive)
