@@ -88,8 +88,8 @@ else:
 print 'Setup camera input'
 os.system('sudo modprobe bcm2835-v4l2')
 Settings.capture = cv2.VideoCapture(0) 
-Settings.capture.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, Settings.imageWidth);
-Settings.capture.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, Settings.imageHeight);
+Settings.capture.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, Settings.cameraWidth);
+Settings.capture.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, Settings.cameraHeight);
 Settings.capture.set(cv2.cv.CV_CAP_PROP_FPS, Settings.frameRate);
 if not Settings.capture.isOpened():
     Settings.capture.open()

@@ -149,6 +149,10 @@ class StreamProcessor(threading.Thread):
         self.terminated = False
         self.name = str(name)
         self.eventWait = (2.0 * Settings.processingThreads) / Settings.frameRate
+        if Settings.cameraWidth != Settings.scaledWidth or Settings.cameraHeight != Settings.scaledHeight:
+            self.resize = True
+        else:
+            self.resize = False
         print 'Processor thread %s started with idle time of %.2fs' % (self.name, self.eventWait)
         self.start()
 
@@ -232,6 +236,9 @@ class StreamProcessor(threading.Thread):
                     print fps
                 Settings.frameAnnounce = 0
                 Settings.lastFrameStamp = frameStamp
+        # Resize if needed
+        if self.resize:
+            image = cv2.resize(image, (Settings.scaledWidth, Settings.scaledHeight), interpolation = cv2.INTER_NEAREST)
         # Process image to get a lineMask image (boolean)
         minBGR = numpy.array((Settings.minHuntColour[2], Settings.minHuntColour[1], Settings.minHuntColour[0]))
         maxBGR = numpy.array((Settings.maxHuntColour[2], Settings.maxHuntColour[1], Settings.maxHuntColour[0]))
@@ -286,19 +293,19 @@ class StreamProcessor(threading.Thread):
             # We only have a far point
             # Not great, but we will use it
             isGood = True
-            offset = ((2.0 * X2) / Settings.imageWidth) - 1.0
+            offset = ((2.0 * X2) / Settings.scaledWidth) - 1.0
             change = 0.0
         elif X2 == None:
             # We only have a near point
             # We loose the change, but offset will be good
             isGood = True
-            offset = ((2.0 * X1) / Settings.imageWidth) - 1.0
+            offset = ((2.0 * X1) / Settings.scaledWidth) - 1.0
             change = 0.0
         else:
             # We have both points :)
             isGood = True
-            offset = ((2.0 * X1) / Settings.imageWidth) - 1.0
-            change = (2.0 * (X2 - X1)) / Settings.imageWidth
+            offset = ((2.0 * X1) / Settings.scaledWidth) - 1.0
+            change = (2.0 * (X2 - X1)) / Settings.scaledWidth
         Settings.controller.nextSample = (isGood, offset, change)
         Settings.controller.event.set()
 

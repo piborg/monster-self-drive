@@ -10,18 +10,20 @@ voltageIn = 1.2 * 10                    # Total battery voltage to the ThunderBo
 voltageOut = 12.0 * 0.95                # Maximum motor voltage, we limit it to 95% to allow the RPi to get uninterrupted power
 
 # Camera settings
-imageWidth   = 160                      # Camera image width
-imageHeight  = 120                      # Camera image height
+cameraWidth  = 640                      # Camera image width
+cameraHeight = 480                      # Camera image height
 frameRate    = 30                       # Camera image capture frame rate
 flippedImage = True                     # True if the camera needs to be rotated
 
 # Processing settings
+scaledWidth   = 160                     # Resized image width
+scaledHeight  = 120                     # Resized image height
 processingThreads = 4                   # Number of processing threads to run
 minHuntColour = ( 80,   0,   0)         # Minimum RGB values for our coloured line
 maxHuntColour = (255, 100, 100)         # Maximum RGB values for our coloured line
 erodeSize = 5                           # Size of the erosion used to remove noise, larger reduces noise further
-targetY1 = int(imageHeight * 0.9)       # Y location for the closest point to track in the image
-targetY2 = int(imageHeight * 0.6)       # Y location for the furthest point to track in the image
+targetY1 = int(scaledHeight * 0.9)      # Y location for the closest point to track in the scaled image
+targetY2 = int(scaledHeight * 0.6)      # Y location for the furthest point to track in the scaled image
 
 # Control settings
 motorSmoothing = 5                      # Number of frames to average motor output for, larger is slower to respond but drives smoother
